@@ -1,12 +1,12 @@
 {
   "name": "connect-feishu-bot",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Create a Feishu/Lark bot by scanning a QR code. 扫码一键创建飞书机器人。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "bin": {
-    "connect-feishu-bot": "./dist/cli.js"
+    "connect-feishu-bot": "dist/cli.js"
   },
   "exports": {
     ".": {
@@ -40,7 +40,7 @@
     "qrcode-terminal": "^0.12.0"
   },
   "devDependencies": {
-    "typescript": "^5.5.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.19.37",
+    "typescript": "^5.9.3"
   }
 }
