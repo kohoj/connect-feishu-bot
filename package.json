@@ -1,7 +1,7 @@
 {
   "name": "connect-feishu-bot",
-  "version": "0.2.0",
-  "description": "Create and stream with Feishu/Lark bots. QR code setup + CardKit streaming cards. 扫码创建飞书机器人 + 流式卡片响应。",
+  "version": "0.3.0",
+  "description": "Full-featured Feishu/Lark bot SDK. QR setup, CardKit streaming, emoji reactions, messaging, mentions. 飞书机器人 SDK：扫码创建、流式卡片、表情反应、消息收发、@提及。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,6 +20,10 @@
     "./reactions": {
       "types": "./dist/reactions/index.d.ts",
       "import": "./dist/reactions/index.js"
+    },
+    "./bot": {
+      "types": "./dist/bot/index.d.ts",
+      "import": "./dist/bot/index.js"
     }
   },
   "files": [
@@ -59,6 +63,7 @@
     }
   },
   "devDependencies": {
+    "@larksuiteoapi/node-sdk": "^1.60.0",
     "@types/node": "^20.19.37",
     "typescript": "^5.9.3"
   }

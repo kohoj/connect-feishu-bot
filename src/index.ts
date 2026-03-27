@@ -2,6 +2,7 @@ export { connectFeishuBot } from './registration.js'
 export { validateCredentials } from './validate.js'
 export { createStreaming } from './streaming/index.js'
 export { createReactions } from './reactions/index.js'
+export { FeishuBot, createBot } from './bot/index.js'
 export type {
   ConnectOptions,
   ConnectResult,
@@ -18,3 +19,12 @@ export type {
   ReactionsManager,
   AcknowledgeOptions,
 } from './reactions/index.js'
+export type {
+  FeishuBotOptions,
+  IncomingMessage,
+  Logger,
+} from './bot/index.js'
+export {
+  CHAT_RECIPIENT_PREFIX,
+  OPEN_RECIPIENT_PREFIX,
+} from './bot/types.js'

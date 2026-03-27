@@ -9,7 +9,9 @@
  *                               → aborted
  */
 
+import { log } from '../log.js'
 import type { LarkClient, StreamingOptions, CompleteOptions } from './types.js'
+import { resolveRecipientTarget } from '../bot/types.js'
 
 const CREATE_TIMEOUT_MS = 10_000
 import { FlushController } from './flush.js'
@@ -88,7 +90,7 @@ export class CardSession {
 
   async complete(options?: CompleteOptions): Promise<boolean> {
     if (!this.transition('completed')) {
-      console.warn(`[connect-feishu-bot] complete() rejected: phase=${this.phase}, cardId=${this.cardId}, messageId=${this.messageId}`)
+      log.warn(`[connect-feishu-bot] complete() rejected: phase=${this.phase}, cardId=${this.cardId}, messageId=${this.messageId}`)
       return false
     }
 
@@ -134,7 +136,7 @@ export class CardSession {
         }), CREATE_TIMEOUT_MS)
       }
     } catch (err) {
-      console.warn('[connect-feishu-bot] complete() card update failed:', String(err))
+      log.warn('[connect-feishu-bot] complete() card update failed:', String(err))
     }
     return true
   }
@@ -236,7 +238,7 @@ export class CardSession {
       this.transition('streaming')
     } catch (cardkitErr) {
       // CardKit failed — fall back to regular interactive card
-      console.warn('[connect-feishu-bot] CardKit failed, trying IM fallback:', String(cardkitErr))
+      log.warn('[connect-feishu-bot] CardKit failed, trying IM fallback:', String(cardkitErr))
       this.cardId = null
       this.fallback = true
 
@@ -247,7 +249,7 @@ export class CardSession {
         this.messageId = msgId
         this.transition('streaming')
       } catch (imErr) {
-        console.warn('[connect-feishu-bot] IM fallback also failed:', String(imErr))
+        log.warn('[connect-feishu-bot] IM fallback also failed:', String(imErr))
         this.transition('aborted')
       }
     }
@@ -266,11 +268,12 @@ export class CardSession {
       return resp?.data?.message_id ?? ''
     }
 
-    const receiveIdType = resolveReceiveIdType(this.chatId)
+    const target = resolveRecipientTarget(this.chatId)
+    if (!target) throw new Error(`Invalid target: "${this.chatId}"`)
     const resp = await this.client.im.message.create({
-      params: { receive_id_type: receiveIdType },
+      params: { receive_id_type: target.receiveIdType },
       data: {
-        receive_id: this.chatId,
+        receive_id: target.receiveId,
         msg_type: 'interactive',
         content,
       },
@@ -324,14 +327,6 @@ export class CardSession {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-
-function resolveReceiveIdType(id: string): 'chat_id' | 'open_id' | 'user_id' | 'union_id' | 'email' {
-  if (id.startsWith('oc_')) return 'chat_id'
-  if (id.startsWith('ou_')) return 'open_id'
-  if (id.startsWith('on_')) return 'union_id'
-  if (id.includes('@')) return 'email'
-  return 'open_id'
-}
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
   let timer: ReturnType<typeof setTimeout>
