@@ -1,7 +1,7 @@
 {
   "name": "connect-feishu-bot",
-  "version": "0.1.1",
-  "description": "Create a Feishu/Lark bot by scanning a QR code. 扫码一键创建飞书机器人。",
+  "version": "0.2.0",
+  "description": "Create and stream with Feishu/Lark bots. QR code setup + CardKit streaming cards. 扫码创建飞书机器人 + 流式卡片响应。",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -12,6 +12,14 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./streaming": {
+      "types": "./dist/streaming/index.d.ts",
+      "import": "./dist/streaming/index.js"
+    },
+    "./reactions": {
+      "types": "./dist/reactions/index.d.ts",
+      "import": "./dist/reactions/index.js"
     }
   },
   "files": [
@@ -33,11 +41,22 @@
     "飞书",
     "机器人",
     "qr-code",
-    "chatbot"
+    "chatbot",
+    "streaming",
+    "cardkit",
+    "interactive-card"
   ],
   "license": "MIT",
   "dependencies": {
     "qrcode-terminal": "^0.12.0"
+  },
+  "peerDependencies": {
+    "@larksuiteoapi/node-sdk": ">=1.59.0"
+  },
+  "peerDependenciesMeta": {
+    "@larksuiteoapi/node-sdk": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@types/node": "^20.19.37",

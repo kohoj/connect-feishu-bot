@@ -1,8 +1,8 @@
 # connect-feishu-bot
 
-Scan a QR code with Feishu to create and connect a bot in seconds. No manual app creation, no permission configuration, no admin approval.
+Create and stream with Feishu/Lark bots. QR code setup + CardKit streaming cards.
 
-**扫码一键创建飞书机器人。无需手动建应用、配权限、等审批。**
+**扫码创建飞书机器人 + 流式卡片响应。**
 
 ## Before vs After
 
@@ -205,6 +205,127 @@ try {
   }
 }
 ```
+
+## Streaming Cards
+
+Real-time streaming responses using Feishu's CardKit 2.0. Users see text appear character-by-character with a typewriter animation — no more dead silence while your bot thinks.
+
+**流式卡片响应。用户实时看到文字逐字生成，像 ChatGPT 一样丝滑。**
+
+### Quick start
+
+```typescript
+import * as lark from '@larksuiteoapi/node-sdk'
+import { createStreaming } from 'connect-feishu-bot'
+
+const client = new lark.Client({ appId: '...', appSecret: '...' })
+const streaming = createStreaming(client)
+
+// First call — card appears with "Thinking..." and a loading icon
+await streaming.update(chatId, sessionId, '')
+
+// Stream text — typewriter animation at 100ms intervals
+await streaming.update(chatId, sessionId, 'Let me think about that...')
+
+// Finalize — loading icon removed, optional elapsed time footer
+await streaming.complete(chatId, sessionId, { elapsed: 2400 })
+```
+
+### API
+
+#### `createStreaming(client): StreamingManager`
+
+Create a streaming manager from a `@larksuiteoapi/node-sdk` Client instance.
+
+#### `manager.update(chatId, sessionId, text, options?)`
+
+Send or update a streaming card. First call creates the card, subsequent calls stream text.
+
+- `sessionId` — any number or string identifying the streaming session
+- `options.replyTo` — reply to a specific message ID
+- `options.replyInThread` — reply within a thread
+
+#### `manager.complete(chatId, sessionId, options?)`
+
+Finalize the card. Closes streaming mode, shows final text.
+
+- `options.elapsed` — elapsed time in ms, shown in the footer
+
+#### `manager.abort(chatId, sessionId)`
+
+Abort the card. Closes streaming with partial text preserved.
+
+#### `manager.dispose()`
+
+Abort all active sessions and release resources.
+
+### How it works
+
+Uses Feishu's CardKit 2.0 API for native streaming with typewriter animation:
+
+```
+update() first call  →  cardkit.v1.card.create (streaming_mode: true)
+                     →  im.message.create (card_id reference)
+
+update() subsequent  →  cardkit.v1.cardElement.content (100ms throttle)
+
+complete()           →  cardkit.v1.card.settings (streaming_mode: false)
+                     →  cardkit.v1.card.update (final card)
+```
+
+If CardKit is unavailable (missing permissions), automatically falls back to `im.message.patch` at 1500ms throttle. The API stays the same — your code doesn't need to change.
+
+### Integration with AI agents
+
+```typescript
+// In your Feishu channel implementation:
+const streaming = createStreaming(larkClient)
+
+// Called by the agent framework during response generation
+async function sendMessageDraft(chatId: string, draftId: number, text: string) {
+  await streaming.update(chatId, draftId, text)
+}
+
+// After response is complete
+await streaming.complete(chatId, draftId, { elapsed: responseTime })
+```
+
+## Reactions
+
+Content-aware emoji reactions on incoming messages. Acknowledges instantly, escalates with time, clears when the response arrives.
+
+```typescript
+import { createReactions } from 'connect-feishu-bot'
+
+const reactions = createReactions(client)
+
+// On incoming message — instant, content-aware reaction
+await reactions.acknowledge(chatId, messageId, text, { hasAttachment: true })
+
+// When bot starts responding — reaction steps aside
+await reactions.clear(chatId)
+
+// On disconnect — clean up timers
+reactions.dispose()
+```
+
+### Emoji palette
+
+| Trigger | Emoji | Meaning |
+|---------|-------|---------|
+| Greeting / affirmative | `FINGERHEART` 🫰 | Warm acknowledgment |
+| Question | `THINKING` 🤔 | Contemplating |
+| Help request | `OnIt` 🫡 | On it |
+| Gratitude | `HEART` ❤️ | Thanks received |
+| Attachment / long text | `StatusReading` 📖 | Reading |
+| 5s no response | `Typing` ⌨️ | Still processing |
+| 15s no response | `STRIVE` 💪 | Deep work |
+
+### Race-condition handling
+
+- **Rapid messages**: old reaction is cleared before new one is added
+- **clear() during in-flight acknowledge()**: generation counter prevents orphaned reactions
+- **Escalation**: timers are chained (not parallel) to prevent duplicate reactions
 
 ## Integration Examples
 
